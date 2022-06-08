@@ -1,0 +1,6 @@
+*.pyc
+.idea/
+.env
+api/swagger.*
+go.sum
+main
