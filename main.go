@@ -11,8 +11,7 @@ import (
 	"github.com/google/logger"
 
 	"github.com/joho/godotenv"
-	"github.com/viniciusbds/arrebol-pb-resource-manager/api"
-	"github.com/viniciusbds/arrebol-pb-resource-manager/balancer"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/autoscaler"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
@@ -31,8 +30,6 @@ func main() {
 		logger.Errorln(err.Error())
 	}
 
-	apiPort := flag.String(ServerPort, os.Getenv("DEFAULT_SERVER_PORT"), "Service port")
-
 	flag.Parse()
 
 	s := storage.New(os.Getenv("DATABASE_ADDRESS"), os.Getenv("DATABASE_PORT"), os.Getenv("DATABASE_USER"),
@@ -40,23 +37,14 @@ func main() {
 	s.Setup()
 	defer s.Driver().Close()
 
-	a := api.New(s)
-
 	// Shutdown gracefully
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 		<-sigs
 		log.Println("Shutting down service")
-
-		if err := a.Shutdown(); err != nil {
-			log.Printf("Failed to shutdown the server: %v", err)
-		}
+		autoscaler.Stop()
 	}()
 
-	go balancer.Start()
-
-	if err := a.Start(*apiPort); err != nil {
-		log.Fatal(err.Error())
-	}
+	autoscaler.Start()
 }
