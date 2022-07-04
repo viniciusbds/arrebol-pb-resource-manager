@@ -15,10 +15,6 @@ import (
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
-const (
-	ServerPort = "SERVER_PORT"
-)
-
 func main() {
 
 	var wait time.Duration
