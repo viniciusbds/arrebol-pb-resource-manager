@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/bmatcuk/go-vagrant"
-	"github.com/viniciusbds/arrebol-pb-resource-manager/constants"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
 )
 
 var (
@@ -18,14 +18,14 @@ var (
 func AddNode(vcpu, memory float32) error {
 	nodeName := fmt.Sprintf("node%d", numNodes+1)
 
-	vagrantfilePath := path.Join(constants.VAGRANT_PATH, nodeName)
+	vagrantfilePath := path.Join(internal.VAGRANT_PATH, nodeName)
 
 	err := os.Mkdir(vagrantfilePath, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	input, err := ioutil.ReadFile(constants.VAGRANTFILE_TEMPLATE_PATH)
+	input, err := ioutil.ReadFile(internal.VAGRANTFILE_TEMPLATE_PATH)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func AddNode(vcpu, memory float32) error {
 }
 
 func RemoveNode(nodeName string) error {
-	vagrantfilePath := path.Join(constants.VAGRANT_PATH, nodeName)
+	vagrantfilePath := path.Join(internal.VAGRANT_PATH, nodeName)
 
 	client, err := vagrant.NewVagrantClient(vagrantfilePath)
 	if err != nil {
@@ -70,7 +70,7 @@ func RemoveNode(nodeName string) error {
 	if destroycmd.Error != nil {
 		return err
 	}
-	if err := os.RemoveAll(path.Join(constants.VAGRANT_PATH, nodeName)); err != nil {
+	if err := os.RemoveAll(path.Join(internal.VAGRANT_PATH, nodeName)); err != nil {
 		return err
 	}
 	return nil

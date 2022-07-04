@@ -1,4 +1,4 @@
-package constants
+package internal
 
 const (
 	VAGRANT_PATH              = "../resource-provider/vagrant"

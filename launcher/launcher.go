@@ -6,12 +6,12 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/viniciusbds/arrebol-pb-resource-manager/constants"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
 )
 
 func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, node string) error {
 
-	vagrantfilePath := path.Join(constants.VAGRANT_PATH, node)
+	vagrantfilePath := path.Join(internal.VAGRANT_PATH, node)
 
 	cmd := exec.Command("cp", "../launcher/scripts/startup_worker.sh", vagrantfilePath)
 	cmd.Stdin = os.Stdin
