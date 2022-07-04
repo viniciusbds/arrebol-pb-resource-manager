@@ -22,7 +22,8 @@ func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, no
 		return err
 	}
 
-	cmd = exec.Command("bash", path.Join(vagrantfilePath, "startup_worker.sh"), vagrantfilePath,
+	cmd = exec.Command("bash", path.Join(vagrantfilePath, "startup_worker.sh"),
+		vagrantfilePath,
 		fmt.Sprintf("%f", vcpu),
 		fmt.Sprintf("%f", ram),
 		workerID,

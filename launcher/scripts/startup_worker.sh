@@ -1,12 +1,12 @@
 #!/bin/bash
 
-cd $1
-
+VAGRANTFILE_PATH=$1
 VCPU=$2
 RAM=$3
 WORKER_ID=$4
 QUEUE_ID=$5
 
+cd $VAGRANTFILE_PATH
 vagrant ssh -c "mkdir ${WORKER_ID}"
 vagrant ssh -c "git clone https://github.com/ufcg-lsd/arrebol-pb-worker ${WORKER_ID}"
 vagrant ssh -c "touch ${WORKER_ID}/conf.json"
