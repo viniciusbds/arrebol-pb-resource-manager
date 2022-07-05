@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/bmatcuk/go-vagrant"
+	"github.com/joho/godotenv"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
 )
 
@@ -30,9 +31,15 @@ func AddNode(vcpu, memory float32) error {
 		return err
 	}
 
+	err = godotenv.Load("../.env")
+	if err != nil {
+		return err
+	}
+
 	output := bytes.Replace(input, []byte("VBOX_NAME"), []byte(nodeName), -1)
 	output = bytes.Replace(output, []byte("MEMORY"), []byte(fmt.Sprintf("%v", memory)), -1)
 	output = bytes.Replace(output, []byte("CPUS"), []byte(fmt.Sprintf("%v", vcpu)), -1)
+	output = bytes.Replace(output, []byte("ARREBOL_PUB_KEY_PATH"), []byte(os.Getenv("ARREBOL_PUB_KEY_PATH")), -1)
 
 	if err = ioutil.WriteFile(path.Join(vagrantfilePath, "Vagrantfile"), output, os.ModePerm); err != nil {
 		return err

@@ -66,4 +66,7 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y git htop
   SHELL
+
+  # copy server public key to root dir of node
+  config.vm.provision "file", source: "ARREBOL_PUB_KEY_PATH", destination: "./arrebol.pub"
 end
