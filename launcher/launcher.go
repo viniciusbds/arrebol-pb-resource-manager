@@ -37,7 +37,5 @@ func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, no
 		return err
 	}
 
-	//TODO Concluir a configuração e inicializar o Worker
-
 	return nil
 }
