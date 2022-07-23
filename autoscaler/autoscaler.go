@@ -1,10 +1,18 @@
 package autoscaler
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/viniciusbds/arrebol-pb-resource-manager/launcher"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/utils"
+
+	resourceProvider "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
 
 	"github.com/google/logger"
 )
@@ -13,8 +21,16 @@ var (
 	RUNNING = true
 )
 
-func Start() error {
+const (
+	PUBLIC_KEY      = "Public-Key"
+	SERVER_ENDPOINT = "SERVER_ENDPOINT"
+	RM_PAYLOAD      = "RM_PAYLOAD"
+	DEFAULT_RAM     = 1024
+	DEFAULT_CPU     = 2
+)
 
+func Start() error {
+	fmt.Println("Starting autoscaler...")
 	interval, err := strconv.Atoi(os.Getenv("BALANCE_CHECK_INTERVAL"))
 	if err != nil {
 		logger.Errorln(err.Error())
@@ -48,7 +64,7 @@ func Balance() error {
 
 	if re > 0 {
 		fmt.Println("Balancing ...")
-		return AddWorker(queueID)
+		return AddWorker(queueID, DEFAULT_CPU, DEFAULT_RAM)
 	}
 
 	if re < 0 {
@@ -65,8 +81,25 @@ func CheckUnbalance() (int, error) {
 	return 0, nil
 }
 
-func AddWorker(queueID string) error {
-	// if need AddNode();
+func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
+	nodeID := firstAvailableNode(vcpu, ram)
+	if nodeID == "" {
+		nodeID, err = resourceProvider.AddNode(DEFAULT_CPU, DEFAULT_RAM)
+		if err != nil {
+			return err
+		}
+	}
+
+	workerId, err := GetWorkerId()
+	if err != nil {
+		return err
+	}
+
+	err = launcher.CreateWorker(workerId, queueId, vcpu, ram, nodeID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -121,4 +154,10 @@ func HandleGetWorkerIdResponse(response *utils.HttpResponse) (string, error) {
 func RemoveWorker(queueID string) error {
 	// verify if can RemoveNode();
 	return nil
+}
+
+func firstAvailableNode(vcpu float64, ram float64) string {
+	// TODO
+	nodeID := "workeridex"
+	return nodeID
 }
