@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/autoscaler"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/utils"
 )
 
 func main() {
@@ -33,6 +34,8 @@ func main() {
 	s.Setup()
 	defer s.Driver().Close()
 
+	generateKeys()
+
 	// Shutdown gracefully
 	go func() {
 		sigs := make(chan os.Signal, 1)
@@ -43,4 +46,10 @@ func main() {
 	}()
 
 	autoscaler.Start()
+}
+
+func generateKeys() {
+	keyName := os.Getenv("RM_KEY_NAME")
+	log.Println("Starting to gen rsa key pair with name: " + keyName)
+	utils.GenerateAccessKeys(keyName)
 }
