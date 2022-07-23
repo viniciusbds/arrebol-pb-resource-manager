@@ -16,7 +16,7 @@ var (
 	numNodes = 0
 )
 
-func AddNode(vcpu, memory float32) error {
+func AddNode(vcpu, memory float64) error {
 	nodeName := fmt.Sprintf("node%d", numNodes+1)
 
 	vagrantfilePath := path.Join(internal.VAGRANT_PATH, nodeName)
