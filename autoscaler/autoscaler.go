@@ -70,6 +70,54 @@ func AddWorker(queueID string) error {
 	return nil
 }
 
+func GetWorkerId() (string, error) {
+	publicKey, err := utils.GetBase64PubKey()
+	if err != nil {
+		return "", err
+	}
+
+	headers := http.Header{}
+	headers.Set(PUBLIC_KEY, publicKey)
+
+	httpResponse, err := utils.RequestWorkerId(
+		"resource-manager",
+		os.Getenv(RM_PAYLOAD),
+		headers,
+		os.Getenv(SERVER_ENDPOINT)+"/workers/id",
+	)
+	if err != nil {
+		log.Fatal("Communication error with the server: " + err.Error())
+	}
+
+	workerId, err := HandleGetWorkerIdResponse(httpResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return workerId, nil
+}
+
+func HandleGetWorkerIdResponse(response *utils.HttpResponse) (string, error) {
+	if response.StatusCode != 200 {
+		log.Fatal("The work could not be subscribed. Status Code: " + strconv.Itoa(response.StatusCode))
+	}
+
+	var parsedBody map[string]string
+	err := json.Unmarshal(response.Body, &parsedBody)
+
+	if err != nil {
+		return "", err
+	}
+
+	workerId, ok := parsedBody["worker-id"]
+
+	if !ok {
+		log.Fatal("The worker-id is not in the response body")
+	}
+
+	return workerId, nil
+}
+
 func RemoveWorker(queueID string) error {
 	// verify if can RemoveNode();
 	return nil
