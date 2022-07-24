@@ -17,3 +17,7 @@ func (s *Storage) RetrieveResources() ([]*Resource, error) {
 
 	return resources, err
 }
+
+func (s *Storage) DeleteResource(nodeName string) error {
+	return s.driver.Where("name = ?", nodeName).Delete(&Resource{}).Error
+}

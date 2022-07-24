@@ -59,22 +59,23 @@ func (s *Storage) CreateSchema() {
 
 type Resource struct {
 	gorm.Model
-	CPU     int8   `json:"CPU"`
-	RAM     int8   `json:"RAM"` //in mb
-	Address string `json:"Address"`
+	Name    string  `json:"Name"`
+	CPU     float64 `json:"CPU"`
+	RAM     float64 `json:"RAM"` //in mb
+	Address string  `json:"Address"`
 }
 
 func (c Resource) String() string {
-	return fmt.Sprintf("[ID: %d, CPU: %d, RAM:%d, Address: %s]", c.ID, c.CPU, c.RAM, c.Address)
+	return fmt.Sprintf("[ID: %d, Name: %s, CPU: %f, RAM:%ff, Address: %s]", c.ID, c.Name, c.CPU, c.RAM, c.Address)
 }
 
 type Consumption struct {
 	gorm.Model
-	ResourceID uint `json:"ResourceID"`
-	CPU        int8 `json:"CPU"`
-	RAM        int8 `json:"RAM"` //in mb
+	ResourceID uint    `json:"ResourceID"`
+	CPU        float64 `json:"CPU"`
+	RAM        float64 `json:"RAM"` //in mb
 }
 
 func (c Consumption) String() string {
-	return fmt.Sprintf("[ID: %d, ResourceID: %d, CPU: %d, RAM:%d]", c.ID, c.ResourceID, c.CPU, c.RAM)
+	return fmt.Sprintf("[ID: %d, ResourceID: %d, CPU: %f, RAM:%f]", c.ID, c.ResourceID, c.CPU, c.RAM)
 }

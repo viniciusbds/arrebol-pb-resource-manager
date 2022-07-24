@@ -10,6 +10,7 @@ import (
 	"github.com/bmatcuk/go-vagrant"
 	"github.com/joho/godotenv"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
 var (
@@ -59,6 +60,18 @@ func AddNode(vcpu, memory float64) (string, error) {
 		return "", err
 	}
 	numNodes++
+
+	err = storage.DB.SaveResource(&storage.Resource{
+		Name:    nodeName,
+		CPU:     vcpu,
+		RAM:     memory,
+		Address: "localhost",
+	})
+
+	if err != nil {
+		return "", err
+	}
+
 	return nodeName, nil
 }
 
@@ -80,5 +93,11 @@ func RemoveNode(nodeName string) error {
 	if err := os.RemoveAll(path.Join(internal.VAGRANT_PATH, nodeName)); err != nil {
 		return err
 	}
+
+	err = storage.DB.DeleteResource(nodeName)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
