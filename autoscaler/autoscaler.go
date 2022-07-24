@@ -90,7 +90,7 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 		}
 	}
 
-	workerId, err := GetWorkerId()
+	workerId, err := RequestWorkerId()
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 	return nil
 }
 
-func GetWorkerId() (string, error) {
+func RequestWorkerId() (string, error) {
 	publicKey, err := utils.GetBase64PubKey()
 	if err != nil {
 		return "", err
@@ -112,12 +112,11 @@ func GetWorkerId() (string, error) {
 	headers := http.Header{}
 	headers.Set(PUBLIC_KEY, publicKey)
 
-	httpResponse, err := utils.RequestWorkerId(
-		"resource-manager",
-		os.Getenv(RM_PAYLOAD),
-		headers,
-		os.Getenv(SERVER_ENDPOINT)+"/workers/id",
-	)
+	keyId := "resource-manager"
+	payload := os.Getenv(RM_PAYLOAD)
+	endpoint := os.Getenv(SERVER_ENDPOINT) + "/workers/id"
+
+	httpResponse, err := utils.RequestWorkerId(keyId, payload, headers, endpoint)
 	if err != nil {
 		log.Fatal("Communication error with the server: " + err.Error())
 	}
