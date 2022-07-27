@@ -172,7 +172,16 @@ func HandleGetWorkerIdResponse(response *utils.HttpResponse) (string, error) {
 	return workerId, nil
 }
 
-func RemoveWorker(queueID string) error {
+func RemoveWorker(workerID string) error {
+
+	// triggers removal of worker process
+	<-channels[workerID]
+
+	fmt.Printf("Deleting consumption for worker [%s]\n", workerID)
+	if err := storage.DB.DeleteConsumption(workerID); err != nil {
+		return err
+	}
+
 	// verify if can RemoveNode();
 	return nil
 }
