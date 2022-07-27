@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/bmatcuk/go-vagrant"
-	"github.com/joho/godotenv"
+	uuid "github.com/satori/go.uuid"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
@@ -27,12 +27,7 @@ func AddNode(vcpu, memory float64) (string, error) {
 		return "", err
 	}
 
-	input, err := ioutil.ReadFile(internal.VAGRANTFILE_TEMPLATE_PATH)
-	if err != nil {
-		return "", err
-	}
-
-	err = godotenv.Load("../.env")
+	input, err := ioutil.ReadFile(path.Join(internal.VAGRANTFILE_TEMPLATE_PATH))
 	if err != nil {
 		return "", err
 	}
@@ -61,18 +56,42 @@ func AddNode(vcpu, memory float64) (string, error) {
 	}
 	numNodes++
 
-	err = storage.DB.SaveResource(&storage.Resource{
+	resource := &storage.Resource{
 		Name:    nodeName,
 		CPU:     vcpu,
 		RAM:     memory,
 		Address: "localhost",
-	})
+	}
 
+	vagrantID, err := getVagrantID(nodeName)
 	if err != nil {
 		return "", err
 	}
 
-	return nodeName, nil
+	resource.ID, err = uuid.FromString(vagrantID)
+	if err != nil {
+		return "", err
+	}
+
+	if err := storage.DB.SaveResource(resource); err != nil {
+		return "", err
+	}
+
+	return resource.ID.String(), nil
+}
+
+func getVagrantID(nodeName string) (string, error) {
+	indexUuidPath := path.Join(internal.VAGRANT_PATH, nodeName, ".vagrant", "machines", "default", "virtualbox", "index_uuid")
+	file, err := os.Open(indexUuidPath)
+	if err != nil {
+		return "", err
+	}
+	uuidBytes := make([]byte, 32)
+	bytesRead, err := file.Read(uuidBytes)
+	if err != nil {
+		return "", err
+	}
+	return string(uuidBytes[:bytesRead]), nil
 }
 
 func RemoveNode(nodeName string) error {

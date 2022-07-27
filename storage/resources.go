@@ -1,10 +1,12 @@
 package storage
 
+import uuid "github.com/satori/go.uuid"
+
 func (s *Storage) SaveResource(r *Resource) error {
 	return s.driver.Save(&r).Error
 }
 
-func (s *Storage) RetrieveResource(resourceID uint) (*Resource, error) {
+func (s *Storage) RetrieveResource(resourceID uuid.UUID) (*Resource, error) {
 	var resource Resource
 	err := s.driver.First(&resource, resourceID).Error
 	return &resource, err

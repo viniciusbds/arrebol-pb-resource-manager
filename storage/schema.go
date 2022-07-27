@@ -3,9 +3,11 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/logger"
 	"github.com/jinzhu/gorm"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (s *Storage) DropTablesIfExist() *gorm.DB {
@@ -58,11 +60,18 @@ func (s *Storage) CreateSchema() {
 }
 
 type Resource struct {
-	gorm.Model
+	Base
 	Name    string  `json:"Name"`
 	CPU     float64 `json:"CPU"`
 	RAM     float64 `json:"RAM"` //in mb
 	Address string  `json:"Address"`
+}
+
+type Base struct {
+	ID        uuid.UUID `gorm:"type:uuid;primary_key;"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
 }
 
 func (c Resource) String() string {
@@ -71,11 +80,12 @@ func (c Resource) String() string {
 
 type Consumption struct {
 	gorm.Model
-	ResourceID uint    `json:"ResourceID"`
-	CPU        float64 `json:"CPU"`
-	RAM        float64 `json:"RAM"` //in mb
+	WorkerID   string    `json:"WorkerID"`
+	ResourceID uuid.UUID `gorm:"type:uuid;foreign_key;"`
+	CPU        float64   `json:"CPU"`
+	RAM        float64   `json:"RAM"` //in mb
 }
 
 func (c Consumption) String() string {
-	return fmt.Sprintf("[ID: %d, ResourceID: %d, CPU: %f, RAM:%f]", c.ID, c.ResourceID, c.CPU, c.RAM)
+	return fmt.Sprintf("[ID: %d,  WorkerId: %s,ResourceID: %d, CPU: %f, RAM:%f]", c.ID, c.WorkerID, c.ResourceID, c.CPU, c.RAM)
 }
