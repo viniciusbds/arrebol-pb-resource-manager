@@ -155,8 +155,44 @@ func RemoveWorker(queueID string) error {
 	return nil
 }
 
-func firstAvailableNode(vcpu float64, ram float64) string {
-	// TODO
-	nodeID := "workeridex"
-	return nodeID
+func firstAvailableNode(vcpu float64, ram float64) (string, error) {
+	resources, err := storage.DB.RetrieveResources()
+	if err != nil {
+		return "", err
+	}
+
+	for _, resource := range resources {
+		hasAvailable, err := hasAvailableResources(resource, vcpu, ram)
+		if err != nil {
+			return "", err
+		}
+		if hasAvailable {
+			return resource.ID.String(), nil
+		}
+	}
+
+	return "", nil
+}
+
+func hasAvailableResources(resource *storage.Resource, cpuNeeded, ramNeeded float64) (bool, error) {
+	consumptions, err := storage.DB.RetrieveConsumptionByResource(resource.ID)
+	if err != nil {
+		return false, err
+	}
+
+	var (
+		total_cpu_used float64
+		total_ram_used float64
+	)
+
+	for _, c := range consumptions {
+		total_cpu_used += c.CPU
+		total_ram_used += c.RAM
+	}
+
+	hasCPU := resource.CPU-total_cpu_used >= cpuNeeded
+	hasRAM := resource.RAM-total_ram_used >= ramNeeded
+
+	return hasCPU && hasRAM, nil
+
 }
