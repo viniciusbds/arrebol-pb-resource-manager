@@ -5,5 +5,5 @@ api/swagger.*
 go.sum
 main
 
-resource-provider/vagrant*
+resource-provider/vagrant/node*
 certs
