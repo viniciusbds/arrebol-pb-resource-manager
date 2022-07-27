@@ -9,16 +9,17 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/viniciusbds/arrebol-pb-resource-manager/launcher"
-	"github.com/viniciusbds/arrebol-pb-resource-manager/utils"
-
-	resourceProvider "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
-
 	"github.com/google/logger"
+	uuid "github.com/satori/go.uuid"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/launcher"
+	resourceProvider "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/utils"
 )
 
 var (
-	RUNNING = true
+	RUNNING  = true
+	channels map[string](chan string)
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 	SERVER_ENDPOINT = "SERVER_ENDPOINT"
 	RM_PAYLOAD      = "RM_PAYLOAD"
 	DEFAULT_RAM     = 1024
-	DEFAULT_CPU     = 2
+	DEFAULT_CPU     = 1
 )
 
 func Start() error {
@@ -82,7 +83,11 @@ func CheckUnbalance() (int, error) {
 }
 
 func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
-	nodeID := firstAvailableNode(vcpu, ram)
+	nodeID, err := firstAvailableNode(vcpu, ram)
+	if err != nil {
+		return err
+	}
+
 	if nodeID == "" {
 		nodeID, err = resourceProvider.AddNode(DEFAULT_CPU, DEFAULT_RAM)
 		if err != nil {
@@ -95,7 +100,24 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 		return err
 	}
 
-	err = launcher.CreateWorker(workerId, queueId, vcpu, ram, nodeID)
+	channels[workerId] = make(chan string)
+
+	err = launcher.CreateWorker(workerId, queueId, vcpu, ram, nodeID, channels[workerId])
+	if err != nil {
+		return err
+	}
+
+	nodeUUID, err := uuid.FromString(nodeID)
+	if err != nil {
+		return err
+	}
+
+	err = storage.DB.SaveConsumption(&storage.Consumption{
+		ResourceID: nodeUUID,
+		WorkerID:   workerId,
+		CPU:        vcpu,
+		RAM:        ram,
+	})
 	if err != nil {
 		return err
 	}
