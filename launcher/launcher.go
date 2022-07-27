@@ -2,40 +2,67 @@ package launcher
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
-	"path"
+	"strings"
+	"syscall"
 
-	"github.com/viniciusbds/arrebol-pb-resource-manager/internal"
+	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
-func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, node string) error {
+func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, resourceID string, c chan string) error {
 
-	vagrantfilePath := path.Join(internal.VAGRANT_PATH, node)
+	vagrantID := strings.Replace(resourceID, "-", "", -1)
 
-	cmd := exec.Command("cp", "../launcher/scripts/startup_worker.sh", vagrantfilePath)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
+	cmd := exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "mkdir %s"`, vagrantID, workerID))
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("bash", path.Join(vagrantfilePath, "startup_worker.sh"),
-		vagrantfilePath,
-		fmt.Sprintf("%f", vcpu),
-		fmt.Sprintf("%f", ram),
-		workerID,
-		queueID,
-	)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "git clone https://github.com/viniciusbds/arrebol-pb-worker %s"`, vagrantID, workerID))
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "mv %s/.env.example2 %s/.env"`, vagrantID, workerID, workerID))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cp server.pub %s/certs"`, vagrantID, workerID))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cd %s && ./create_worker_conf.sh  %d %d %s %d"`, vagrantID, workerID, 1, 1, workerID, 1))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cd %s && /usr/local/go/bin/go build"`, vagrantID, workerID))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cd %s && ./arrebol-pb-worker"`, vagrantID, workerID))
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
+	go func() {
+		defer quit(workerID)
+		if err := cmd.Run(); err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
+
+	go func() {
+		c <- fmt.Sprintf("finishing worker [%s]", workerID)
+		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
 	return nil
+}
+
+func quit(workerID string) {
+	fmt.Printf("Deleting consumption for worker [%s]\n", workerID)
+	storage.DB.DeleteConsumption(workerID)
 }
