@@ -2,6 +2,7 @@ package autoscaler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -57,32 +58,63 @@ func Stop() error {
 }
 
 func Balance() error {
-	queueID := "1"
-	// get SERVER INFO : current resource availability matches the current workload?
+	fmt.Println("Balancing ...")
 
-	re, err := CheckUnbalance()
+	queuesState, err := RequestStateSummary()
 	if err != nil {
-		logger.Errorln(err.Error())
 		return err
 	}
 
-	if re > 0 {
-		fmt.Println("Balancing ...")
-		return AddWorker(queueID, DEFAULT_CPU, DEFAULT_RAM)
+	for _, qs := range queuesState {
+		re, err := CheckUnbalance(qs)
+		if err != nil {
+			return err
+		}
+
+		if re > 0 {
+
+			for i := 0; i < re; i++ {
+				if err := AddWorker(qs.QueueID, DEFAULT_CPU, DEFAULT_RAM); err != nil {
+					return err
+				}
+			}
+
+		} else if re < 0 {
+
+			numWorkersToRemove := -1 * re
+			workers, err := storage.DB.RetrieveConsumptionByQueue(qs.QueueID)
+			if err != nil {
+				return err
+			}
+
+			if len(workers) < numWorkersToRemove {
+				return errors.New("error: there are less workers than the number of desired to remove")
+			}
+
+			for i := 0; i < numWorkersToRemove; i++ {
+				worker := workers[i]
+				if err := RemoveWorker(worker.WorkerID); err != nil {
+					return err
+				}
+			}
+
+		} else {
+			fmt.Println("No need balance ...")
+		}
 	}
 
-	if re < 0 {
-		fmt.Println("Balancing ...")
-		return RemoveWorker(queueID)
-	}
-
-	fmt.Println("No need balance ...")
 	return nil
 }
 
-func CheckUnbalance() (int, error) {
-	fmt.Println("Checking ...")
+func CheckUnbalance(qs QueueState) (int, error) {
+	fmt.Printf("Checking ... for: %v\n", qs)
+	// TODO
 	return 0, nil
+}
+
+func RequestStateSummary() ([]QueueState, error) {
+	// TODO
+	return []QueueState{}, nil
 }
 
 func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
@@ -118,6 +150,7 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 	err = storage.DB.SaveConsumption(&storage.Consumption{
 		ResourceID: nodeUUID,
 		WorkerID:   workerId,
+		QueueID:    queueId,
 		CPU:        vcpu,
 		RAM:        ram,
 	})
