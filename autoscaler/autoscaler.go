@@ -32,11 +32,14 @@ const (
 
 func Start() error {
 	fmt.Println("Starting autoscaler...")
+
+	channels = make(map[string](chan string)) // workerID ----> chan (string)
+
 	interval, err := strconv.Atoi(os.Getenv("BALANCE_CHECK_INTERVAL"))
 	if err != nil {
-		logger.Errorln(err.Error())
 		return err
 	}
+
 	for RUNNING {
 		err = Balance()
 		if err != nil {
