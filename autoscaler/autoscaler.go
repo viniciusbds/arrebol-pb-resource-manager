@@ -1,11 +1,8 @@
 package autoscaler
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -15,12 +12,12 @@ import (
 	"github.com/viniciusbds/arrebol-pb-resource-manager/launcher"
 	resourceProvider "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
-	"github.com/viniciusbds/arrebol-pb-resource-manager/utils"
 )
 
 var (
 	RUNNING  = true
 	channels map[string](chan string)
+	balancer Balancer
 )
 
 const (
@@ -34,6 +31,8 @@ const (
 
 func Start() error {
 	fmt.Println("Starting autoscaler...")
+
+	balancer = NewDefaultBalancer()
 
 	channels = make(map[string](chan string)) // workerID ----> chan (string)
 
@@ -67,7 +66,7 @@ func Balance() error {
 	}
 
 	for _, qs := range queuesState {
-		re, err := CheckUnbalance(qs)
+		re, err := balancer.Check(qs)
 		if err != nil {
 			return err
 		}
@@ -105,17 +104,6 @@ func Balance() error {
 	}
 
 	return nil
-}
-
-func CheckUnbalance(qs QueueState) (int, error) {
-	fmt.Printf("Checking ... for: %v\n", qs)
-	// TODO
-	return 0, nil
-}
-
-func RequestStateSummary() ([]QueueState, error) {
-	// TODO
-	return []QueueState{}, nil
 }
 
 func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
