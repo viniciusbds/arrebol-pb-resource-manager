@@ -9,7 +9,6 @@ import (
 )
 
 type HTTPBody struct {
-	Payload   string
 	Signature []byte
 }
 
@@ -32,22 +31,21 @@ type HttpResponse struct {
 	StatusCode int
 }
 
-func getSignature(payload interface{}, keyId string) []byte {
-	parsedPayload, err := json.Marshal(payload)
+func getSignature(message interface{}, keyId string) []byte {
+	parsedMessage, err := json.Marshal(message)
 
 	if err != nil {
 		log.Fatal("Error on marshalling the payload")
 	}
 
-	signature, _ := SignMessage(GetPrivateKey(keyId), parsedPayload)
+	signature, _ := SignMessage(GetPrivateKey(keyId), parsedMessage)
 
 	return signature
 }
 
-func RequestWorkerId(keyId string, payload string, headers http.Header, endpoint string) (*HttpResponse, error) {
-	signature := GetSignature(payload, keyId)
-
-	requestBody, err := json.Marshal(HTTPBody{Payload: payload, Signature: signature})
+func Post(keyId string, message string, headers http.Header, endpoint string) (*HttpResponse, error) {
+	signature := GetSignature(message, keyId)
+	requestBody, err := json.Marshal(HTTPBody{Signature: signature})
 
 	if err != nil {
 		log.Fatal("Unable to marshal body")

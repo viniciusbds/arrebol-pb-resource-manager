@@ -24,11 +24,12 @@ var (
 )
 
 const (
-	PUBLIC_KEY      = "Public-Key"
-	SERVER_ENDPOINT = "SERVER_ENDPOINT"
-	RM_PAYLOAD      = "RM_PAYLOAD"
-	DEFAULT_RAM     = 1024
-	DEFAULT_CPU     = 1
+	PUBLIC_KEY                = "Public-Key"
+	RESOURCE_MANAGER_KEY_NAME = "resource-manager"
+	SERVER_ENDPOINT           = "SERVER_ENDPOINT"
+	RM_AUTH_MESSAGE           = "RM_AUTH_MESSAGE"
+	DEFAULT_RAM               = 1024
+	DEFAULT_CPU               = 1
 )
 
 func Start() error {
@@ -162,19 +163,13 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 }
 
 func RequestWorkerId() (string, error) {
-	publicKey, err := utils.GetBase64PubKey()
-	if err != nil {
-		return "", err
-	}
-
 	headers := http.Header{}
-	headers.Set(PUBLIC_KEY, publicKey)
 
-	keyId := "resource-manager"
-	payload := os.Getenv(RM_PAYLOAD)
+	keyId := RESOURCE_MANAGER_KEY_NAME
+	message := os.Getenv(RM_AUTH_MESSAGE)
 	endpoint := os.Getenv(SERVER_ENDPOINT) + "/workers/id"
 
-	httpResponse, err := utils.RequestWorkerId(keyId, payload, headers, endpoint)
+	httpResponse, err := utils.Post(keyId, message, headers, endpoint)
 	if err != nil {
 		log.Fatal("Communication error with the server: " + err.Error())
 	}
