@@ -23,10 +23,12 @@ var (
 const (
 	PUBLIC_KEY                = "Public-Key"
 	RESOURCE_MANAGER_KEY_NAME = "resource-manager"
-	SERVER_ENDPOINT           = "SERVER_ENDPOINT"
-	RM_AUTH_MESSAGE           = "RM_AUTH_MESSAGE"
-	DEFAULT_RAM               = 1024
-	DEFAULT_CPU               = 1
+	WORKER_API_ENDPOINT       = "WORKER_API_ENDPOINT"
+	MAIN_API_ENDPOINT         = "MAIN_API_ENDPOINT"
+
+	RM_AUTH_MESSAGE = "RM_AUTH_MESSAGE"
+	DEFAULT_RAM     = 1024
+	DEFAULT_CPU     = 1
 )
 
 func Start() error {
