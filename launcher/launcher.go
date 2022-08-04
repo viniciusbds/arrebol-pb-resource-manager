@@ -9,7 +9,7 @@ import (
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
-func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, resourceID string, c chan string) error {
+func CreateWorker(workerID string, vcpu float64, ram float64, resourceID string, c chan string) error {
 
 	vagrantID := strings.Replace(resourceID, "-", "", -1)
 
@@ -33,7 +33,7 @@ func CreateWorker(workerID string, queueID string, vcpu float64, ram float64, re
 		return err
 	}
 
-	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cd %s && ./create_worker_conf.sh  %f %f %s %s"`, vagrantID, workerID, vcpu, ram, workerID, queueID))
+	cmd = exec.Command("bash", "-c", fmt.Sprintf(`vagrant ssh %s -c "cd %s && ./create_worker_conf.sh  %f %f %s"`, vagrantID, workerID, vcpu, ram, workerID))
 	if err := cmd.Run(); err != nil {
 		return err
 	}

@@ -12,12 +12,6 @@ func (s *Storage) RetrieveConsumptionByResource(resourceId uuid.UUID) ([]Consump
 	return consumptions, err
 }
 
-func (s *Storage) RetrieveConsumptionByQueue(queueID string) ([]Consumption, error) {
-	var consumptions []Consumption
-	err := s.driver.Where("queue_id = ?", queueID).Find(&consumptions).Error
-	return consumptions, err
-}
-
 func (s *Storage) DeleteConsumption(workerID string) error {
 	return s.driver.Where("worker_id = ?", workerID).Delete(&Consumption{}).Error
 }

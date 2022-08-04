@@ -81,7 +81,6 @@ func (c Resource) String() string {
 type Consumption struct {
 	gorm.Model
 	WorkerID   string    `json:"WorkerID"`
-	QueueID    string    `json:"QueueID"`
 	ResourceID uuid.UUID `gorm:"type:uuid;foreign_key;"`
 	CPU        float64   `json:"CPU"`
 	RAM        float64   `json:"RAM"` //in mb
