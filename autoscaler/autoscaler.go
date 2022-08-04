@@ -68,34 +68,30 @@ func Balance() error {
 	}
 
 	for _, qs := range queuesState {
-		re, err := balancer.Check(qs)
+		qUnbalance, err := balancer.Check(qs)
 		if err != nil {
 			return err
 		}
 
-		if re > 0 {
+		if qUnbalance > 0 {
 
-			for i := 0; i < re; i++ {
-				if err := AddWorker(qs.QueueID, DEFAULT_CPU, DEFAULT_RAM); err != nil {
+			for i := 0; i < qUnbalance; i++ {
+				if err := AddWorker(DEFAULT_CPU, DEFAULT_RAM); err != nil {
 					return err
 				}
 			}
 
-		} else if re < 0 {
+		} else if qUnbalance < 0 {
 
-			numWorkersToRemove := -1 * re
-			workers, err := storage.DB.RetrieveConsumptionByQueue(qs.QueueID)
-			if err != nil {
-				return err
-			}
+			numWorkersToRemove := -1 * qUnbalance
 
-			if len(workers) < numWorkersToRemove {
+			if len(qs.WorkersIDs) < numWorkersToRemove {
 				return errors.New("error: there are less workers than the number of desired to remove")
 			}
 
 			for i := 0; i < numWorkersToRemove; i++ {
-				worker := workers[i]
-				if err := RemoveWorker(worker.WorkerID); err != nil {
+				workerID := qs.WorkersIDs[i]
+				if err := RemoveWorker(workerID); err != nil {
 					return err
 				}
 			}
