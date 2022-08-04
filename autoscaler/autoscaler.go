@@ -108,7 +108,7 @@ func Balance() error {
 	return nil
 }
 
-func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
+func AddWorker(vcpu float64, ram float64) (err error) {
 	nodeID, err := firstAvailableNode(vcpu, ram)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 
 	channels[workerId] = make(chan string)
 
-	err = launcher.CreateWorker(workerId, queueId, vcpu, ram, nodeID, channels[workerId])
+	err = launcher.CreateWorker(workerId, vcpu, ram, nodeID, channels[workerId])
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,6 @@ func AddWorker(queueId string, vcpu float64, ram float64) (err error) {
 	err = storage.DB.SaveConsumption(&storage.Consumption{
 		ResourceID: nodeUUID,
 		WorkerID:   workerId,
-		QueueID:    queueId,
 		CPU:        vcpu,
 		RAM:        ram,
 	})

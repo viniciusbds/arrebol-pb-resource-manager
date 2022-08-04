@@ -11,9 +11,10 @@ import (
 )
 
 type QueueState struct {
-	QueueID           string `json:"QueueID"`
-	NumWorkers        int    `json:"NumWorkers"`
-	NumReadToRunTasks int    `json:"NumReadToRunTasks"`
+	QueueID           string   `json:"QueueID"`
+	NumWorkers        int      `json:"NumWorkers"`
+	WorkersIDs        []string `json:"WorkersIDs"`
+	NumReadToRunTasks int      `json:"NumReadToRunTasks"`
 }
 
 func RequestStateSummary() ([]QueueState, error) {
