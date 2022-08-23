@@ -10,14 +10,15 @@ import (
 	"github.com/google/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/launcher"
-	resourceProvider "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
+	rp "github.com/viniciusbds/arrebol-pb-resource-manager/resource-provider"
 	"github.com/viniciusbds/arrebol-pb-resource-manager/storage"
 )
 
 var (
-	RUNNING  = true
-	channels map[string](chan string)
-	balancer Balancer
+	RUNNING          = true
+	channels         map[string](chan string)
+	balancer         Balancer
+	resourceProvider rp.ResourceProvider
 )
 
 const (
@@ -35,6 +36,8 @@ func Start() error {
 	fmt.Println("Starting autoscaler...")
 
 	balancer = NewDefaultBalancer()
+
+	resourceProvider = rp.NewDefaultResourceProvider()
 
 	channels = make(map[string](chan string)) // workerID ----> chan (string)
 

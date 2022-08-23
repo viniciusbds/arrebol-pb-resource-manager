@@ -17,7 +17,18 @@ var (
 	numNodes = 0
 )
 
-func AddNode(vcpu, memory float64) (string, error) {
+type ResourceProvider interface {
+	AddNode(vcpu, memory float64) (string, error) // return nodename
+	RemoveNode(nodeName string) error
+}
+
+type DefaultResourceProvider struct{}
+
+func NewDefaultResourceProvider() ResourceProvider {
+	return &DefaultResourceProvider{}
+}
+
+func (rp *DefaultResourceProvider) AddNode(vcpu, memory float64) (string, error) {
 	nodeName := fmt.Sprintf("node%d", numNodes+1)
 
 	vagrantfilePath := path.Join(internal.VAGRANT_PATH, nodeName)
@@ -94,7 +105,7 @@ func getVagrantID(nodeName string) (string, error) {
 	return string(uuidBytes[:bytesRead]), nil
 }
 
-func RemoveNode(nodeName string) error {
+func (rp *DefaultResourceProvider) RemoveNode(nodeName string) error {
 	vagrantfilePath := path.Join(internal.VAGRANT_PATH, nodeName)
 
 	client, err := vagrant.NewVagrantClient(vagrantfilePath)
